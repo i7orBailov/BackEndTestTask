@@ -7,7 +7,7 @@ namespace BackEndTestTask.AppSettings
 {
     public static class ServicesRegistration
     {
-        public static IServiceCollection RegisterDependncyInjection(this IServiceCollection services)
+        public static IServiceCollection RegisterDependencyInjection(this IServiceCollection services)
         {
             services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
             services.AddScoped<INodeService, NodeService>();

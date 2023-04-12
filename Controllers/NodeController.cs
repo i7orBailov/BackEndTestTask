@@ -1,10 +1,9 @@
 ﻿using System.Net;
+using BackEndTestTask.Models;
 using BackEndTestTask.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using BackEndTestTask.Models.Api;
 using BackEndTestTask.Services.Interfaces;
-using BackEndTestTask.Models;
-using System.Reflection.Metadata;
 
 namespace BackEndTestTask.Controllers
 {
@@ -18,8 +17,7 @@ namespace BackEndTestTask.Controllers
             _nodeService = nodeService;
         }
 
-        [HttpPost]
-        [Route(ApiHelper.NodeCreate)]
+        [HttpPost(ApiHelper.NodeCreate)]
         public async Task<IActionResult> Create([FromBody] CreateNodeEndpointData endpointData)
         {
             if (string.IsNullOrWhiteSpace(endpointData.NewNodeName) || 
@@ -33,18 +31,11 @@ namespace BackEndTestTask.Controllers
             }
 
             var result = await _nodeService.AddNodeToParentTree(endpointData.ParentNodeId, endpointData.NewNodeName);
-            if (result.IsSuccessful)
-            {
-                return Ok("successfully added node");
-            }
-            else
-            {
-                return StatusCode((int)HttpStatusCode.InternalServerError);
-            }
+            return result.IsSuccessful ? Ok("Successfully added node")
+                                       : StatusCode((int)HttpStatusCode.InternalServerError);
         }
 
-        [HttpPost]
-        [Route(ApiHelper.NodeRename)]
+        [HttpPost(ApiHelper.NodeRename)]
         public async Task<IActionResult> Rename([FromBody] UpdateNodeEndpointData endpointData)
         {
             if (string.IsNullOrWhiteSpace(endpointData.NewNodeName) ||
@@ -58,18 +49,11 @@ namespace BackEndTestTask.Controllers
             }
 
             var result = await _nodeService.UpdateNode(endpointData.NodeId, endpointData.NewNodeName);
-            if (result.IsSuccessful)
-            {
-                return Ok("successfully renamed node");
-            }
-            else
-            {
-                return StatusCode((int)HttpStatusCode.InternalServerError);
-            }
+            return result.IsSuccessful ? Ok("Successfully renamed node")
+                                       : StatusCode((int)HttpStatusCode.InternalServerError);
         }
 
-        [HttpPost]
-        [Route(ApiHelper.NodeDelete)]
+        [HttpPost(ApiHelper.NodeDelete)]
         public async Task<IActionResult> Delete([FromBody] RemoveNodeEndpointData endpointData)
         {
             if (string.IsNullOrWhiteSpace(endpointData.TreeParentName))
@@ -82,14 +66,8 @@ namespace BackEndTestTask.Controllers
             }
 
             var result = await _nodeService.RemoveNodeFromParent(endpointData.NodeId);
-            if (result.IsSuccessful)
-            {
-                return Ok("successfully removed node");
-            }
-            else
-            {
-                return StatusCode((int)HttpStatusCode.InternalServerError);
-            }
+            return result.IsSuccessful ? Ok("Successfully removed node")
+                                       : StatusCode((int)HttpStatusCode.InternalServerError);
         }
     }
 }

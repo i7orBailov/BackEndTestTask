@@ -2,7 +2,6 @@
 using BackEndTestTask.Models.Database;
 using BackEndTestTask.Services.Interfaces;
 using BackEndTestTask.Models.Repositories.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace BackEndTestTask.Services.Business
 {
@@ -17,8 +16,7 @@ namespace BackEndTestTask.Services.Business
         
         public async Task<ResponseMessage<ExceptionJournal>> GetSingleAsync(string eventId)
         {
-            var journals = await _repository.GetFilteredAsync(filter: n => n.EventId == eventId);
-            var journal = journals.SingleOrDefault();
+            var journal = await _repository.GetSingleAsync(n => n.EventId == eventId);
             return new ResponseMessage<ExceptionJournal>(isSuccessful: true, data: journal);
         }
 

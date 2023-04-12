@@ -19,15 +19,14 @@ namespace BackEndTestTask.Models.Database.Context
                     .ValueGeneratedOnAdd();
 
                 entity.Property(p => p.Name)
-                    .IsRequired();
+                    .IsRequired()
+                    .IsUnicode()
+                    .HasMaxLength(100);
 
                 entity.Property(p => p.ParentId)
                     .IsRequired(false);
 
                 entity.HasKey(p => p.Id);
-
-                entity.HasIndex(p => p.Id)
-                    .IsUnique();
 
                 entity.HasMany(n => n.Children)
                     .WithOne(n => n.Parent)
