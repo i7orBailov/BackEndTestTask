@@ -1,49 +1,14 @@
-﻿using Newtonsoft.Json;
+﻿using Serilog;
+using Newtonsoft.Json;
+using Serilog.Context;
 using BackEndTestTask.Models;
+using Serilog.Formatting.Json;
 using BackEndTestTask.Models.Database;
 using BackEndTestTask.Models.Enums;
 using BackEndTestTask.Models.Repositories.Interfaces;
 
 namespace BackEndTestTask.AppSettings.Middlewares
 {
-    // TODO : Refactor using Seriolog because of possible leak if exception occurs in the database side
-
-    //public class ExceptionMiddleware
-    //{
-    //    private readonly ILogger<ExceptionMiddleware> _logger;
-
-    //    public ExceptionMiddleware(ILogger<ExceptionMiddleware> logger)
-    //    {
-    //        _logger = logger;
-    //    }
-
-    //    public async Task InvokeAsync(HttpContext context)
-    //    {
-    //        var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
-    //        var exception = exceptionHandlerPathFeature.Error;
-
-    //        var journalRecord = new ExceptionJournal
-    //        {
-    //            EventId = Guid.NewGuid(),
-    //            Timestamp = DateTime.Now,
-    //            QueryParams = context.Request.QueryString.ToString(),
-    //            BodyParams = await new StreamReader(context.Request.Body).ReadToEndAsync(),
-    //            StackTrace = exception.StackTrace
-    //        };
-
-    //        // Log journal record to file
-    //        var options = new JsonSerializerOptions { WriteIndented = true };
-    //        var jsonString = JsonSerializer.Serialize(journalRecord, options);
-    //        _logger.LogError(jsonString);
-
-    //        // Log exception details for debugging
-    //        _logger.LogError(exception, "An error occurred while processing the request");
-
-    //        // Return error response
-    //        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-    //        await context.Response.WriteAsync("An error occurred while processing your request.");
-    //    }
-    //}
     public class ExceptionMiddleware
     {
         private readonly RequestDelegate _next;
@@ -73,6 +38,7 @@ namespace BackEndTestTask.AppSettings.Middlewares
                 };
 
                 await repository.AddAsync(journalRecord);
+                SaveToFileExceptionJournal(journalRecord);
 
                 // Log exception details for debugging
                 Console.WriteLine($"Exception {journalRecord.EventId} occurred at {journalRecord.Timestamp}: {stackTrace}");
@@ -91,6 +57,28 @@ namespace BackEndTestTask.AppSettings.Middlewares
                 var responseContentJson = JsonConvert.SerializeObject(responseContent.ExceptionData);
                 await context.Response.WriteAsync(responseContentJson);
             }
+        }
+
+        private void SaveToFileExceptionJournal(ExceptionJournal record)
+        {
+            var logger = new LoggerConfiguration()
+                .WriteTo.File(new JsonFormatter(), GetLogFilePath(), rollingInterval: RollingInterval.Day)
+                .CreateLogger();
+            using (LogContext.PushProperty(nameof(ExceptionJournal), record, destructureObjects: true))
+            {
+                var eventName = "{@0}".Replace("0", nameof(ExceptionJournal));
+                logger.Error(eventName, record);
+            }
+        }
+
+        private string GetLogFilePath()
+        {
+            string logFolderPath = Path.Combine(Environment.CurrentDirectory, "logs");
+            if (!Directory.Exists(logFolderPath))
+            {
+                Directory.CreateDirectory(logFolderPath);
+            }
+            return Path.Combine(logFolderPath, $"{DateTime.UtcNow:yyyy-MM-dd}.log");
         }
     }
 }
